@@ -1,44 +1,44 @@
 extern crate sdl2;
 
-use sdl2::event::Event;
 use sdl2::image::{self, LoadTexture, InitFlag};
+use sdl2::pixels::Color;
+use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::rect::{Rect, Point};
-use sdl2::render::{Canvas, Texture, TextureCreator};
-use sdl2::ttf::Sdl2TtfContext;
-use sdl2::video::{Window, WindowContext};
-use std::time::Duration;
+use sdl2::rect::Rect;
+use sdl2::render::{Texture, TextureCreator, WindowCanvas};
+use sdl2::ttf;
+use sdl2::video::Window;
+use std::f64::consts::PI;
+use std::time::{Duration, Instant};
 
-const SCALE_FACTOR: f64 = 2.3;
-const SCALE_PLAYER: f64 = 0.1 * SCALE_FACTOR;
-const START_POS_X: f64 = 390.0 * SCALE_FACTOR;
-const START_POS_Y: f64 = 433.0 * SCALE_FACTOR;
-const FPS: u32 = 144;
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
 
-struct AbstractCar<'a> {
-    img: Texture<'a>,
-    max_vel: f64,
-    vel: f64,
-    rotation_vel: f64,
-    angle: f64,
+struct Vec2 {
     x: f64,
     y: f64,
-    acceleration: f64,
-    start_pos: (f64, f64),
 }
 
-impl<'a> AbstractCar<'a> {
-    fn new(texture: Texture<'a>, max_vel: f64, rotation_vel: f64, start_pos: (f64, f64)) -> Self {
-        Self {
-            img: texture,
-            max_vel,
+struct Car<'a> {
+    texture: Texture<'a>,
+    pos: Vec2,
+    vel: f64,
+    angle: f64,
+    max_vel: f64,
+    rotation_vel: f64,
+    acceleration: f64,
+}
+
+impl<'a> Car<'a> {
+    fn new(texture: Texture<'a>, pos: Vec2, max_vel: f64, rotation_vel: f64) -> Self {
+        Car {
+            texture,
+            pos,
             vel: 0.0,
-            rotation_vel: 0.25 * rotation_vel,
             angle: 0.0,
-            x: start_pos.0,
-            y: start_pos.1,
+            max_vel,
+            rotation_vel,
             acceleration: 0.1,
-            start_pos,
         }
     }
 
@@ -50,142 +50,37 @@ impl<'a> AbstractCar<'a> {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, texture_creator: &TextureCreator<WindowContext>) {
-        let center = Point::new(self.x as i32, self.y as i32);
-        canvas.copy_ex(&self.img, None, Some(Rect::from_center(center, 50, 50)), self.angle, None, false, false).unwrap();
-    }
-
     fn move_forward(&mut self) {
-        self.vel = self.vel.min(self.max_vel) + self.acceleration;
-        self.move_car();
+        self.vel = (self.vel + self.acceleration).min(self.max_vel);
+        self.update_position();
     }
 
     fn move_backward(&mut self) {
-        self.vel = self.vel.max(-self.max_vel / 2.0) - self.acceleration;
-        self.move_car();
+        self.vel = (self.vel - self.acceleration).max(-self.max_vel / 2.0);
+        self.update_position();
     }
 
-    fn move_car(&mut self) {
-        let radians = self.angle.to_radians();
-        let vertical = radians.cos() * self.vel;
-        let horizontal = radians.sin() * self.vel;
-
-        self.y -= vertical;
-        self.x -= horizontal;
+    fn update_position(&mut self) {
+        let radians = self.angle * PI / 180.0;
+        self.pos.x += self.vel * radians.cos();
+        self.pos.y += self.vel * radians.sin();
     }
 
-    fn collide(&self, mask: &sdl2::surface::Surface) -> Option<Point> {
-        // Implement collision detection logic
-        None
-    }
-
-    fn reset(&mut self) {
-        self.x = self.start_pos.0;
-        self.y = self.start_pos.1;
-        self.angle = 0.0;
-        self.vel = 0.0;
-    }
-}
-
-struct PlayerCar<'a> {
-    abstract_car: AbstractCar<'a>,
-}
-
-impl<'a> PlayerCar<'a> {
-    fn new(texture: Texture<'a>, max_vel: f64, rotation_vel: f64, start_pos: (f64, f64)) -> Self {
-        Self {
-            abstract_car: AbstractCar::new(texture, max_vel, rotation_vel, start_pos),
-        }
-    }
-
-    fn reduce_speed(&mut self) {
-        self.abstract_car.vel = (self.abstract_car.vel - self.abstract_car.acceleration / 2.0).max(0.0);
-        self.abstract_car.move_car();
-    }
-
-    fn bounce(&mut self) {
-        self.abstract_car.vel = -self.abstract_car.vel * 0.5;
-        self.abstract_car.move_car();
-    }
-
-    fn draw(&self, canvas: &mut Canvas<Window>, texture_creator: &TextureCreator<WindowContext>) {
-        self.abstract_car.draw(canvas, texture_creator);
-    }
-
-    fn rotate(&mut self, left: bool, right: bool) {
-        self.abstract_car.rotate(left, right);
-    }
-
-    fn move_forward(&mut self) {
-        self.abstract_car.move_forward();
-    }
-
-    fn move_backward(&mut self) {
-        self.abstract_car.move_backward();
-    }
-
-    fn move_car(&mut self) {
-        self.abstract_car.move_car();
-    }
-
-    fn collide(&self, mask: &sdl2::surface::Surface) -> Option<Point> {
-        self.abstract_car.collide(mask)
-    }
-}
-
-fn draw(
-    canvas: &mut Canvas<Window>,
-    images: &[(Texture, Point)],
-    player_car: &PlayerCar,
-    ttf_context: &Sdl2TtfContext,
-) {
-    canvas.clear();
-    for (img, pos) in images.iter() {
-        canvas.copy(&img, None, Some(Rect::new(pos.x, pos.y, 800, 600))).unwrap();
-    }
-
-    // Draw FPS counter (for simplicity, it shows a fixed value)
-    let font = ttf_context.load_font("assets/comicsans.ttf", 44).unwrap();
-    let surface = font.render("FPS: 144").blended(sdl2::pixels::Color::RGBA(255, 255, 255, 255)).unwrap();
-    let texture = canvas.texture_creator().create_texture_from_surface(&surface).unwrap();
-    canvas.copy(&texture, None, Some(Rect::new(10, 10, 200, 50))).unwrap();
-
-    player_car.draw(canvas, &canvas.texture_creator());
-
-    canvas.present();
-}
-
-fn move_player(player_car: &mut PlayerCar, keys: &sdl2::keyboard::KeyboardState) {
-    let mut moved = false;
-
-    if keys.is_scancode_pressed(sdl2::keyboard::Scancode::A) {
-        player_car.rotate(true, false);
-    }
-    if keys.is_scancode_pressed(sdl2::keyboard::Scancode::D) {
-        player_car.rotate(false, true);
-    }
-    if keys.is_scancode_pressed(sdl2::keyboard::Scancode::W) {
-        moved = true;
-        player_car.move_forward();
-    }
-    if keys.is_scancode_pressed(sdl2::keyboard::Scancode::S) {
-        moved = true;
-        player_car.move_backward();
-    }
-
-    if !moved {
-        player_car.reduce_speed();
+    fn draw(&self, canvas: &mut WindowCanvas) {
+        let (w, h) = self.texture.query().width_height();
+        let dst = Rect::new(self.pos.x as i32, self.pos.y as i32, w, h);
+        canvas.copy_ex(&self.texture, None, Some(dst), -self.angle, None, false, false).unwrap();
     }
 }
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
-    let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
-    let _image_context = image::init(InitFlag::PNG | InitFlag::JPG)?;
+    let ttf_context = ttf::init()?;
+    image::init(InitFlag::PNG | InitFlag::JPG)?;
 
     let window = video_subsystem
-        .window("SuperTuxKart", (800.0 * SCALE_FACTOR) as u32, (600.0 * SCALE_FACTOR) as u32)
+        .window("SuperTuxKart", WIDTH, HEIGHT)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
@@ -193,39 +88,96 @@ fn main() -> Result<(), String> {
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
 
-    let track = texture_creator.load_texture("imgs/rennstrecke.jpg")?;
-    let track_border = texture_creator.load_texture("imgs/rennstrecke_mask_s.xcf")?;
-    let finish_border = texture_creator.load_texture("imgs/finish-line.png")?;
-    let racer1_texture = texture_creator.load_texture("imgs/tuxi.xcf")?;
-    let racer2_texture = texture_creator.load_texture("imgs/yoshi.xcf")?;
+    let track_texture = texture_creator.load_texture("imgs/rennstrecke.jpg")?;
+    let car_texture = texture_creator.load_texture("imgs/tuxi.xcf")?;
 
-    let images = vec![(track, Point::new(0, 0))];
-    let mut player_car = PlayerCar::new(racer1_texture, 3.0, 4.0, (START_POS_X, START_POS_Y));
+    let mut car = Car::new(car_texture, Vec2 { x: 390.0, y: 433.0 }, 3.0, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
-    let mut clock = sdl2::timer::Timer::new()?;
+    let mut last_update = Instant::now();
+    let frame_duration = Duration::from_secs_f64(1.0 / 60.0);
 
-    while let Some(event) = event_pump.poll_iter().find(|event| match event {
-        Event::Quit { .. } => true,
-        _ => false,
-    }) {
-        // Game loop setup
-        draw(&mut canvas, &images, &player_car, &ttf_context);
-        clock.tick(FPS);
+    let mut lapcount1 = 0;
+    let mut won1 = false;
+    let win_text1 = "Player 1 has won!!!";
+    let mut count_text = 0;
 
-        // Player control
-        move_player(&mut player_car, &event_pump.keyboard_state());
+    'running: loop {
+        let now = Instant::now();
+        let delta_time = now - last_update;
+        if delta_time < frame_duration {
+            std::thread::sleep(frame_duration - delta_time);
+            continue;
+        }
+        last_update = now;
 
-        // Check collisions
-        if let Some(_) = player_car.collide(&track_border) {
-            player_car.bounce();
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. } => break 'running,
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                _ => {}
+            }
         }
 
-        // Handle player 2 control here if needed
+        let keys: Vec<Keycode> = event_pump.keyboard_state().pressed_scancodes().filter_map(Keycode::from_scancode).collect();
+
+        let mut moving = false;
+
+        if keys.contains(&Keycode::A) {
+            car.rotate(true, false);
+        }
+        if keys.contains(&Keycode::D) {
+            car.rotate(false, true);
+        }
+        if keys.contains(&Keycode::W) {
+            car.move_forward();
+            moving = true;
+        }
+        if keys.contains(&Keycode::S) {
+            car.move_backward();
+            moving = true;
+        }
+
+        if !moving {
+            car.vel *= 0.9;
+            car.update_position();
+        }
+
+        canvas.set_draw_color(Color::BLACK);
+        canvas.clear();
+        canvas.copy(&track_texture, None, None)?;
+        car.draw(&mut canvas);
+
+        if won1 {
+            if count_text < 30 {
+                let surface = ttf_context.load_font("path/to/font.ttf", 100)?
+                    .render(win_text1)
+                    .blended(Color::GREEN)
+                    .map_err(|e| e.to_string())?;
+                let texture = texture_creator.create_texture_from_surface(&surface)?;
+                canvas.copy(&texture, None, Some(Rect::new(215, 260, 370, 100)))?;
+            }
+            if count_text < 0 {
+                let surface = ttf_context.load_font("path/to/font.ttf", 100)?
+                    .render(win_text1)
+                    .blended(Color::RED)
+                    .map_err(|e| e.to_string())?;
+                let texture = texture_creator.create_texture_from_surface(&surface)?;
+                canvas.copy(&texture, None, Some(Rect::new(215, 260, 370, 100)))?;
+            }
+        }
+
+        if lapcount1 >= 6 {
+            won1 = true;
+            if count_text <= 20 {
+                count_text += 1;
+            } else if count_text > 5 {
+                count_text -= 40;
+            }
+        }
 
         canvas.present();
     }
 
     Ok(())
 }
-
