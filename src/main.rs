@@ -11,8 +11,8 @@ use sdl2::ttf;
 use std::f64::consts::PI;
 use std::time::{Duration, Instant};
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const WIDTH: u32 = 2560;
+const HEIGHT: u32 = 1440;
 
 #[derive(Copy, Clone)]
 struct Vec2 {
@@ -62,15 +62,47 @@ impl<'a> Car<'a> {
     }
 
     fn update_position(&mut self) {
-        let radians = self.angle * PI / 180.0;
+        let radians = self.angle * PI / -180.0;
         self.pos.x += self.vel * radians.cos();
         self.pos.y += self.vel * radians.sin();
     }
 
+    // fn draw(&self, canvas: &mut WindowCanvas) {
+    //     let query = self.texture.query();
+    //     let dst = Rect::new(self.pos.x as i32, self.pos.y as i32, query.width, query.height);
+    //     canvas.copy_ex(&self.texture, None, Some(dst), -self.angle, None, false, false).unwrap();
+    // }
+
     fn draw(&self, canvas: &mut WindowCanvas) {
         let query = self.texture.query();
-        let dst = Rect::new(self.pos.x as i32, self.pos.y as i32, query.width, query.height);
-        canvas.copy_ex(&self.texture, None, Some(dst), -self.angle, None, false, false).unwrap();
+        let original_w = query.width;
+        let original_h = query.height;
+
+        // Skalierungsfaktor (z. B. 0.5 = 50 % der Größe)
+        let scale = 0.1;
+        let scaled_w = (original_w as f64 * scale) as u32;
+        let scaled_h = (original_h as f64 * scale) as u32;
+
+        // Damit das Auto zentriert um seine Mitte rotiert, setzen wir den Mittelpunkt
+        let dst = Rect::new(
+            (self.pos.x as i32) - (scaled_w as i32 / 2),
+            (self.pos.y as i32) - (scaled_h as i32 / 2),
+            scaled_w,
+            scaled_h,
+        );
+
+        // Rotation um die Mitte der Textur
+        let center = sdl2::rect::Point::new(scaled_w as i32 / 2, scaled_h as i32 / 2);
+
+        canvas.copy_ex(
+            &self.texture,
+            None,
+            Some(dst),
+            -self.angle,
+            Some(center),
+            false,
+            false,
+        ).unwrap();
     }
 }
 
