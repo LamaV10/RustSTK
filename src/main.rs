@@ -7,12 +7,13 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::ttf;
-// use sdl2::video::Window;
 use std::f64::consts::PI;
 use std::time::{Duration, Instant};
+use std::io;
+use std::io::prelude::*;
 
-const WIDTH: u32 = 2560;
-const HEIGHT: u32 = 1440;
+static WIDTH: u32 = 2560;
+static HEIGHT: u32 = 1440;
 
 #[derive(Copy, Clone)]
 struct Vec2 {
@@ -52,12 +53,12 @@ impl<'a> Car<'a> {
     }
 
     fn move_forward(&mut self) {
-        self.vel = (self.vel + self.acceleration).min(self.max_vel);
+        self.vel = (self.vel - self.acceleration).min(self.max_vel);
         self.update_position();
     }
 
     fn move_backward(&mut self) {
-        self.vel = (self.vel - self.acceleration).max(-self.max_vel / 2.0);
+        self.vel = (self.vel + self.acceleration).max(self.max_vel / 2.0);
         self.update_position();
     }
 
@@ -107,6 +108,11 @@ impl<'a> Car<'a> {
 }
 
 fn main() -> Result<(), String> {
+    // let stdin = io::stdin();
+    //     for line in stdin.lock().lines() {
+    //         println!("{}", line.unwrap());
+    // }
+
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
