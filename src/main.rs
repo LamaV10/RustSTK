@@ -120,7 +120,7 @@ fn main() -> Result<(), String> {
     image::init(InitFlag::PNG | InitFlag::JPG)?;
 
     let window = video_subsystem
-        .window("SuperTuxKart", WIDTH, HEIGHT)
+        .window("RustSTK", WIDTH, HEIGHT)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
