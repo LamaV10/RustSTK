@@ -1,19 +1,20 @@
 extern crate sdl2;
 
-use sdl2::image::{self, LoadTexture, InitFlag};
-use sdl2::pixels::Color;
 use sdl2::event::Event;
+use sdl2::image::{self, InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, TextureCreator, WindowCanvas};
+use sdl2::render::{Texture, WindowCanvas};
 use sdl2::ttf;
-use sdl2::video::Window;
+// use sdl2::video::Window;
 use std::f64::consts::PI;
 use std::time::{Duration, Instant};
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
+#[derive(Copy, Clone)]
 struct Vec2 {
     x: f64,
     y: f64,
@@ -67,8 +68,8 @@ impl<'a> Car<'a> {
     }
 
     fn draw(&self, canvas: &mut WindowCanvas) {
-        let (w, h) = self.texture.query().width_height();
-        let dst = Rect::new(self.pos.x as i32, self.pos.y as i32, w, h);
+        let query = self.texture.query();
+        let dst = Rect::new(self.pos.x as i32, self.pos.y as i32, query.width, query.height);
         canvas.copy_ex(&self.texture, None, Some(dst), -self.angle, None, false, false).unwrap();
     }
 }
@@ -76,7 +77,8 @@ impl<'a> Car<'a> {
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
-    let ttf_context = ttf::init()?;
+    let ttf_context = ttf::init().map_err(|e| e.to_string())?;
+
     image::init(InitFlag::PNG | InitFlag::JPG)?;
 
     let window = video_subsystem
@@ -89,7 +91,9 @@ fn main() -> Result<(), String> {
     let texture_creator = canvas.texture_creator();
 
     let track_texture = texture_creator.load_texture("imgs/rennstrecke.jpg")?;
-    let car_texture = texture_creator.load_texture("imgs/tuxi.xcf")?;
+    let car_texture = texture_creator.load_texture("imgs/tuxi.png")?;
+
+    let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
 
     let mut car = Car::new(car_texture, Vec2 { x: 390.0, y: 433.0 }, 3.0, 4.0);
 
@@ -97,7 +101,7 @@ fn main() -> Result<(), String> {
     let mut last_update = Instant::now();
     let frame_duration = Duration::from_secs_f64(1.0 / 60.0);
 
-    let mut lapcount1 = 0;
+    let lapcount1 = 0;
     let mut won1 = false;
     let win_text1 = "Player 1 has won!!!";
     let mut count_text = 0;
@@ -148,23 +152,13 @@ fn main() -> Result<(), String> {
         canvas.copy(&track_texture, None, None)?;
         car.draw(&mut canvas);
 
-        if won1 {
-            if count_text < 30 {
-                let surface = ttf_context.load_font("path/to/font.ttf", 100)?
-                    .render(win_text1)
-                    .blended(Color::GREEN)
-                    .map_err(|e| e.to_string())?;
-                let texture = texture_creator.create_texture_from_surface(&surface)?;
-                canvas.copy(&texture, None, Some(Rect::new(215, 260, 370, 100)))?;
-            }
-            if count_text < 0 {
-                let surface = ttf_context.load_font("path/to/font.ttf", 100)?
-                    .render(win_text1)
-                    .blended(Color::RED)
-                    .map_err(|e| e.to_string())?;
-                let texture = texture_creator.create_texture_from_surface(&surface)?;
-                canvas.copy(&texture, None, Some(Rect::new(215, 260, 370, 100)))?;
-            }
+        if won1 && (count_text / 15) % 2 == 0 {
+            let surface = font.render(win_text1)
+                .blended(Color::GREEN)
+                .map_err(|e| e.to_string())?;
+            let texture = texture_creator.create_texture_from_surface(&surface)
+                .map_err(|e| e.to_string())?;
+            canvas.copy(&texture, None, Some(Rect::new(215, 260, 370, 100)))?;
         }
 
         if lapcount1 >= 6 {
