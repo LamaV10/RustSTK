@@ -12,6 +12,8 @@ use std::time::{Duration, Instant};
 use std::io;
 use std::io::prelude::*;
 
+// static WIDTH: u32 = 1920;
+// static HEIGHT: u32 = 1080;
 static WIDTH: u32 = 2560;
 static HEIGHT: u32 = 1440;
 
@@ -68,23 +70,17 @@ impl<'a> Car<'a> {
         self.pos.y += self.vel * radians.sin();
     }
 
-    // fn draw(&self, canvas: &mut WindowCanvas) {
-    //     let query = self.texture.query();
-    //     let dst = Rect::new(self.pos.x as i32, self.pos.y as i32, query.width, query.height);
-    //     canvas.copy_ex(&self.texture, None, Some(dst), -self.angle, None, false, false).unwrap();
-    // }
-
     fn draw(&self, canvas: &mut WindowCanvas) {
         let query = self.texture.query();
         let original_w = query.width;
         let original_h = query.height;
 
-        // Skalierungsfaktor (z. B. 0.5 = 50 % der Größe)
-        let scale = 0.1;
+        // scalefactor
+        let scale = 0.1 * 0.5;
         let scaled_w = (original_w as f64 * scale) as u32;
         let scaled_h = (original_h as f64 * scale) as u32;
 
-        // Damit das Auto zentriert um seine Mitte rotiert, setzen wir den Mittelpunkt
+        // lets the car rotate around its center
         let dst = Rect::new(
             (self.pos.x as i32) - (scaled_w as i32 / 2),
             (self.pos.y as i32) - (scaled_h as i32 / 2),
@@ -92,7 +88,7 @@ impl<'a> Car<'a> {
             scaled_h,
         );
 
-        // Rotation um die Mitte der Textur
+        // rotation around the middle of the texture
         let center = sdl2::rect::Point::new(scaled_w as i32 / 2, scaled_h as i32 / 2);
 
         canvas.copy_ex(
@@ -112,7 +108,6 @@ fn main() -> Result<(), String> {
     //     for line in stdin.lock().lines() {
     //         println!("{}", line.unwrap());
     // }
-
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
@@ -133,8 +128,15 @@ fn main() -> Result<(), String> {
 
     let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
 
-    // let mut car = Car::new(car_texture, Vec2 { x: 390.0, y: 433.0 }, 3.0, 4.0);
-    let mut car = Car::new(car_texture, Vec2 { x: 920.0, y: 1350.0 }, 3.0, 4.0);
+    let mut scale_factor = 1.0;
+    if WIDTH == 1920 {
+        scale_factor = 0.75;
+    } else if WIDTH == 1600 {
+        scale_factor = 0.625;
+    } else if WIDTH == 1280 {
+        scale_factor = 0.5;
+    } 
+    let mut car = Car::new(car_texture, Vec2 { x: 920.0 * scale_factor , y: 1350.0 * scale_factor}, 3.0, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
     let mut last_update = Instant::now();
