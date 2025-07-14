@@ -12,6 +12,8 @@ use std::time::{Duration, Instant};
 use std::io;
 use std::io::prelude::*;
 
+// static WIDTH: u32 = 1280;
+// static HEIGHT: u32 = 720;
 // static WIDTH: u32 = 1920;
 // static HEIGHT: u32 = 1080;
 static WIDTH: u32 = 2560;
@@ -70,13 +72,11 @@ impl<'a> Car<'a> {
         self.pos.y += self.vel * radians.sin();
     }
 
-    fn draw(&self, canvas: &mut WindowCanvas) {
+    fn draw(&self, canvas: &mut WindowCanvas, scale: f64) {
         let query = self.texture.query();
         let original_w = query.width;
         let original_h = query.height;
 
-        // scalefactor
-        let scale = 0.1 * 0.5;
         let scaled_w = (original_w as f64 * scale) as u32;
         let scaled_h = (original_h as f64 * scale) as u32;
 
@@ -129,13 +129,11 @@ fn main() -> Result<(), String> {
     let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
 
     let mut scale_factor = 1.0;
-    if WIDTH == 1920 {
-        scale_factor = 0.75;
-    } else if WIDTH == 1600 {
-        scale_factor = 0.625;
-    } else if WIDTH == 1280 {
-        scale_factor = 0.5;
-    } 
+
+    if WIDTH == 1920 { scale_factor = 0.75;} 
+    else if WIDTH == 1600 { scale_factor = 0.625; } 
+    else if WIDTH == 1280 { scale_factor = 0.5; } 
+
     let mut car = Car::new(car_texture, Vec2 { x: 920.0 * scale_factor , y: 1350.0 * scale_factor}, 3.0, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
@@ -191,7 +189,7 @@ fn main() -> Result<(), String> {
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
         canvas.copy(&track_texture, None, None)?;
-        car.draw(&mut canvas);
+        car.draw(&mut canvas, 0.1 * scale_factor);
 
         if won1 && (count_text / 15) % 2 == 0 {
             let surface = font.render(win_text1)
