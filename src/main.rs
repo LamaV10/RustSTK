@@ -133,7 +133,8 @@ fn main() -> Result<(), String> {
 
     let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
 
-    let mut car = Car::new(car_texture, Vec2 { x: 390.0, y: 433.0 }, 3.0, 4.0);
+    // let mut car = Car::new(car_texture, Vec2 { x: 390.0, y: 433.0 }, 3.0, 4.0);
+    let mut car = Car::new(car_texture, Vec2 { x: 920.0, y: 1350.0 }, 3.0, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
     let mut last_update = Instant::now();
