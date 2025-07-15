@@ -12,12 +12,12 @@ use std::time::{Duration, Instant};
 use std::io;
 use std::io::prelude::*;
 
-// static WIDTH: u32 = 1280;
-// static HEIGHT: u32 = 720;
+static WIDTH: u32 = 1280;
+static HEIGHT: u32 = 720;
 // static WIDTH: u32 = 1920;
 // static HEIGHT: u32 = 1080;
-static WIDTH: u32 = 2560;
-static HEIGHT: u32 = 1440;
+// static WIDTH: u32 = 2560;
+// static HEIGHT: u32 = 1440;
 
 #[derive(Copy, Clone)]
 struct Vec2 {
@@ -57,12 +57,12 @@ impl<'a> Car<'a> {
     }
 
     fn move_forward(&mut self) {
-        self.vel = (self.vel - self.acceleration).min(self.max_vel);
+        self.vel = (self.vel - self.acceleration).max(-self.max_vel);
         self.update_position();
     }
 
     fn move_backward(&mut self) {
-        self.vel = (self.vel + self.acceleration).max(self.max_vel / 2.0);
+        self.vel = (self.vel + self.acceleration).min(self.max_vel / 2.0);
         self.update_position();
     }
 
@@ -134,7 +134,7 @@ fn main() -> Result<(), String> {
     else if WIDTH == 1600 { scale_factor = 0.625; } 
     else if WIDTH == 1280 { scale_factor = 0.5; } 
 
-    let mut car = Car::new(car_texture, Vec2 { x: 920.0 * scale_factor , y: 1350.0 * scale_factor}, 3.0, 4.0);
+    let mut car = Car::new(car_texture, Vec2 { x: 920.0 * scale_factor , y: 1350.0 * scale_factor}, 4.0, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
     let mut last_update = Instant::now();
