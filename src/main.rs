@@ -9,8 +9,8 @@ use sdl2::render::{Texture, WindowCanvas};
 use sdl2::ttf;
 use std::f64::consts::PI;
 use std::time::{Duration, Instant};
-use std::io;
-use std::io::prelude::*;
+// use std::io;
+// use std::io::prelude::*;
 
 // static WIDTH: u32 = 1280;
 // static HEIGHT: u32 = 720;
@@ -125,8 +125,8 @@ fn main() -> Result<(), String> {
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
 
-    let track_texture = texture_creator.load_texture("imgs/rennstrecke.jpg")?;
-    let car_texture = texture_creator.load_texture("imgs/tuxi.png")?;
+    let track_texture = texture_creator.load_texture("imgs/RaceTrack/rennstrecke.jpg")?;
+    let car_texture = texture_creator.load_texture("imgs/Tux/ferrari-rossa-tux.png")?;
 
     let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
 
