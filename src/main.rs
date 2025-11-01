@@ -9,17 +9,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use sdl2::ttf;
 use std::f64::consts::PI;
 use std::time::{Duration, Instant};
-// use std::io;
-// use std::io::prelude::*;
-
-// static WIDTH: u32 = 1280;
-// static HEIGHT: u32 = 720;
-// static WIDTH: u32 = 1600;
-// static HEIGHT: u32 = 900;
-// static WIDTH: u32 = 1920;
-// static HEIGHT: u32 = 1080;
-static WIDTH: u32 = 2560;
-static HEIGHT: u32 = 1440;
+use std::io;
 
 #[derive(Copy, Clone)]
 struct Vec2 {
@@ -106,10 +96,24 @@ impl<'a> Car<'a> {
 }
 
 fn main() -> Result<(), String> {
-    // let stdin = io::stdin();
-    //     for line in stdin.lock().lines() {
-    //         println!("{}", line.unwrap());
-    // }
+    println!("Enter your desired width: ");
+    println!(" 2560x1440 \n 1920x1080 \n 1600x900 \n 1280x720\n => ");
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).expect("Error while reading");
+
+    let width: u32 = input.trim().parse().expect("Invalid Resolution!");
+
+    let mut scale_factor = 1.0;
+    let mut max_vel : f64 = 10.0;
+    let mut height : u32 = 1440;
+
+    if width == 1920 { scale_factor = 0.75; max_vel = 8.0; height = 1080;} 
+    else if width == 1600 { scale_factor = 0.625; max_vel = 6.0; height = 900;} 
+    else if width == 1280 { scale_factor = 0.5; max_vel =  4.0; height = 720;} 
+    println!("Choosen Resolution: {} x {}", width, height);
+
+
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
@@ -117,7 +121,7 @@ fn main() -> Result<(), String> {
     image::init(InitFlag::PNG | InitFlag::JPG)?;
 
     let window = video_subsystem
-        .window("RustSTK", WIDTH, HEIGHT)
+        .window("RustSTK", width, height)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
@@ -129,14 +133,6 @@ fn main() -> Result<(), String> {
     let car_texture = texture_creator.load_texture("imgs/Tux/ferrari-rossa-tux.png")?;
 
     let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
-
-    let mut scale_factor = 1.0;
-    let mut max_vel : f64 = 10.0;
-
-    if WIDTH == 1920 { scale_factor = 0.75; max_vel = 8.0;} 
-    else if WIDTH == 1600 { scale_factor = 0.625; max_vel = 6.0;} 
-    else if WIDTH == 1280 { scale_factor = 0.5; max_vel =  4.0;} 
-
     let mut car = Car::new(car_texture, Vec2 { x: 920.0 * scale_factor , y: 1350.0 * scale_factor}, max_vel, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
