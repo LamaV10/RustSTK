@@ -161,21 +161,23 @@ fn main() -> Result<(), String> {
             }
         }
 
-        let keys: Vec<Keycode> = event_pump.keyboard_state().pressed_scancodes().filter_map(Keycode::from_scancode).collect();
+        use sdl2::keyboard::Scancode;
+
+        let keyboard = event_pump.keyboard_state();
 
         let mut moving = false;
 
-        if keys.contains(&Keycode::A) {
+        if keyboard.is_scancode_pressed(Scancode::A) {
             car.rotate(true, false);
         }
-        if keys.contains(&Keycode::D) {
+        if keyboard.is_scancode_pressed(Scancode::D) {
             car.rotate(false, true);
         }
-        if keys.contains(&Keycode::W) {
+        if keyboard.is_scancode_pressed(Scancode::W) {
             car.move_forward();
             moving = true;
         }
-        if keys.contains(&Keycode::S) {
+        if keyboard.is_scancode_pressed(Scancode::S) {
             car.move_backward();
             moving = true;
         }
