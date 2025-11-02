@@ -97,20 +97,21 @@ impl<'a> Car<'a> {
 
 fn main() -> Result<(), String> {
     println!("Enter your desired width: ");
-    println!(" 2560x1440 \n 1920x1080 \n 1600x900 \n 1280x720\n => ");
+    println!(" 1: 2560x1440 \n 2: 1920x1080 \n 3: 1600x900 \n 4: 1280x720\n => ");
 
     let mut input = String::new();
     io::stdin().read_line(&mut input).expect("Error while reading");
 
-    let width: u32 = input.trim().parse().expect("Invalid Resolution!");
+    let res: u32 = input.trim().parse().expect("Invalid Resolution!");
 
     let mut scale_factor = 1.0;
     let mut max_vel : f64 = 10.0;
+    let mut width: u32 = 2560;
     let mut height : u32 = 1440;
 
-    if width == 1920 { scale_factor = 0.75; max_vel = 8.0; height = 1080;} 
-    else if width == 1600 { scale_factor = 0.625; max_vel = 6.0; height = 900;} 
-    else if width == 1280 { scale_factor = 0.5; max_vel =  4.0; height = 720;} 
+    if res == 2 { scale_factor = 0.75; max_vel = 8.0; width = 1920; height = 1080;} 
+    else if res == 3 { scale_factor = 0.625; max_vel = 6.0; width = 1600; height = 900;} 
+    else if res == 4 { scale_factor = 0.5; max_vel =  4.0; width = 1280; height = 720;} 
     println!("Choosen Resolution: {} x {}", width, height);
 
 
