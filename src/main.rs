@@ -130,10 +130,10 @@ fn main() -> Result<(), String> {
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     let texture_creator = canvas.texture_creator();
 
-    let track_texture = texture_creator.load_texture("imgs/RaceTrack/rennstrecke.jpg")?;
-    let car_texture = texture_creator.load_texture("imgs/Tux/ferrari-rossa-tux.png")?;
+    let track_texture = texture_creator.load_texture("src/imgs/RaceTrack/rennstrecke.jpg")?;
+    let car_texture = texture_creator.load_texture("src/imgs/Tux/ferrari-rossa-tux.png")?;
 
-    let font = ttf_context.load_font("fonts/arial.ttf", 100)?;
+    let font = ttf_context.load_font("src/fonts/arial.ttf", 100)?;
     let mut car = Car::new(car_texture, Vec2 { x: 920.0 * scale_factor , y: 1350.0 * scale_factor}, max_vel, 4.0);
 
     let mut event_pump = sdl_context.event_pump()?;
